@@ -11,7 +11,7 @@ int main() {
 		scanf(" %c", &znak);
 	}
 	
-	printf("Spravny vstup");
+	printf("Spravny vstup lol");
 	
 	return 0;
 }
