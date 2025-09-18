@@ -10,5 +10,3 @@ int main() {
     printf("Náhodné číslo: %d\n", cislo);
     return 0;
 }
-
-
