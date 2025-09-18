@@ -27,8 +27,8 @@ void kostka(){
 }
 
 void hadej(){
-    my = rand_in_range(1,100);
-    run = true;
+    int my = rand_in_range(1,100);
+    bool run = true;
     int guess;
     int hadal = 0;
     while (run){
@@ -36,14 +36,14 @@ void hadej(){
         scanf("%d", &guess);
         hadal++;
         if (guess < my){
-            printf("malo");
+            printf("malo\n");
         }
-        if else (guess == my){
+        else if(guess == my){
             run = false;
-            printf("ano zpravne");
+            printf("ano zpravne, trvalo ti to %d pokusu\n", hadal);
         }
         else {
-            printf("malo");
+            printf("moc\n");
         }
     }
 }
