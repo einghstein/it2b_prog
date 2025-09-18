@@ -8,9 +8,7 @@ int rand_in_range(int min, int max){
     return cislo + min;
 }
 
-int main() {
-    printf("%d\n\n",rand_in_range(1,2));
-    
+void kostka(){
     int pocet_kostek;
     int pocet_sten;
 
@@ -26,6 +24,34 @@ int main() {
     }
     
     printf("hod: %d\n", v);
+}
+
+void hadej(){
+    my = rand_in_range(1,100);
+    run = true;
+    int guess;
+    int hadal = 0;
+    while (run){
+        printf("hadej: ");
+        scanf("%d", &guess);
+        hadal++;
+        if (guess < my){
+            printf("malo");
+        }
+        if else (guess == my){
+            run = false;
+            printf("ano zpravne");
+        }
+        else {
+            printf("malo");
+        }
+    }
+}
+
+int main() {
+    printf("%d\n\n",rand_in_range(1,2));
+    
+    hadej();
 
     return 0;
 }
