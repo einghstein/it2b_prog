@@ -1,0 +1,232 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <curl/curl.h>
+#include <time.h>
+#include <ctype.h>
+
+struct MemoryStruct {
+    char *memory;
+    size_t size;
+};
+
+static size_t
+WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+    size_t realsize = size * nmemb;
+    struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+
+    char *ptr = realloc(mem->memory, mem->size + realsize + 1);
+    if(ptr == NULL) {
+        // out of memory!
+        fprintf(stderr, "Not enough memory (realloc returned NULL)\n");
+        return 0;
+    }
+
+    mem->memory = ptr;
+    memcpy(&(mem->memory[mem->size]), contents, realsize);
+    mem->size += realsize;
+    mem->memory[mem->size] = 0;
+
+    return realsize;
+}
+
+// Function to convert string to lowercase
+void strtolower(char *str) {
+    for(int i = 0; str[i]; i++) {
+        str[i] = tolower((unsigned char)str[i]);
+    }
+}
+
+// Function to check guess and generate feedback string
+// G = correct spot, Y = wrong spot but letter present, - = letter not present
+void generate_feedback(const char *target, const char *guess, char *feedback) {
+    int i;
+    int target_letter_count[26] = {0};
+    int guess_letter_count[26] = {0};
+
+    // First pass: mark correct spots as G and count other letters
+    for (i = 0; i < 5; i++) {
+        if (guess[i] == target[i]) {
+            feedback[i] = 'G';
+        } else {
+            feedback[i] = '-';
+            target_letter_count[target[i] - 'a']++;
+        }
+    }
+
+    // Second pass: mark Y for letters present but misplaced
+    for (i = 0; i < 5; i++) {
+        if (feedback[i] == '-') {
+            int idx = guess[i] - 'a';
+            if (target_letter_count[idx] > 0) {
+                feedback[i] = 'Y';
+                target_letter_count[idx]--;
+            }
+        }
+    }
+    feedback[5] = '\0';
+}
+
+int main(void)
+{
+    CURL *curl_handle;
+    CURLcode res;
+
+    struct MemoryStruct chunk;
+
+    chunk.memory = malloc(1);  // initial memory allocation
+    chunk.size = 0;            // no data at this point
+
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    curl_handle = curl_easy_init();
+    if(!curl_handle) {
+        fprintf(stderr, "Failed to initialize curl\n");
+        return 1;
+    }
+
+    // English words list URL
+    const char *url = "https://raw.githubusercontent.com/dwyl/english-words/master/words.txt";
+
+    curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
+    curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+
+    res = curl_easy_perform(curl_handle);
+
+    if(res != CURLE_OK) {
+        fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                curl_easy_strerror(res));
+    }
+    else {
+        // Process the downloaded data line by line and build the word list array
+        size_t word_capacity = 10000;
+        char **words = malloc(word_capacity * sizeof(char *));
+        if (!words) {
+            fprintf(stderr, "Failed to allocate memory for words array\n");
+            free(chunk.memory);
+            curl_easy_cleanup(curl_handle);
+            curl_global_cleanup();
+            return 1;
+        }
+        size_t word_count = 0;
+
+        char *line = NULL;
+        char *saveptr = NULL;
+        line = strtok_r(chunk.memory, "\n", &saveptr);
+        while (line != NULL) {
+            if (strlen(line) == 5) {
+                // Check if all letters
+                int valid = 1;
+                for (int i = 0; i < 5; i++) {
+                    if (!isalpha(line[i])) {
+                        valid = 0;
+                        break;
+                    }
+                }
+                if (valid) {
+                    // Store lowercase copy
+                    char *w = malloc(6);
+                    if (!w) {
+                        fprintf(stderr, "Failed to allocate memory for word\n");
+                        break;
+                    }
+                    for (int i = 0; i < 5; i++) {
+                        w[i] = tolower((unsigned char)line[i]);
+                    }
+                    w[5] = '\0';
+
+                    if (word_count >= word_capacity) {
+                        word_capacity *= 2;
+                        char **tmp = realloc(words, word_capacity * sizeof(char *));
+                        if (!tmp) {
+                            fprintf(stderr, "Failed to reallocate words array\n");
+                            free(w);
+                            break;
+                        }
+                        words = tmp;
+                    }
+
+                    words[word_count++] = w;
+                }
+            }
+        line = strtok_r(NULL, "\n", &saveptr);
+    }
+
+    if (word_count == 0) {
+        fprintf(stderr, "No valid 5-letter words loaded\n");
+        free(chunk.memory);
+        curl_easy_cleanup(curl_handle);
+        curl_global_cleanup();
+        return 1;
+    }
+
+    srand((unsigned int)time(NULL));
+    const char *target = words[rand() % word_count];
+
+    printf("Welcome to Wordle!\n");
+    printf("Guess the 5-letter word. You have %d attempts.\n", 6);
+
+    char guess[7]; // 5 letters + newline + null terminator
+    for (int attempt = 1; attempt <= 6; attempt++) {
+        printf("Attempt %d: ", attempt);
+        if (fgets(guess, sizeof(guess), stdin) == NULL) {
+            printf("\nError reading input. Exiting.\n");
+            break;
+        }
+
+        size_t len = strlen(guess);
+        if (len > 0 && guess[len-1] == '\n') {
+            guess[len-1] = '\0';
+            len--;
+        }
+
+        if (len != 5) {
+            printf("Your guess must be exactly 5 letters.\n");
+            attempt--;
+            continue;
+        }
+
+        strtolower(guess);
+
+        int valid = 1;
+        for (int i = 0; i < 5; i++) {
+            if (!isalpha(guess[i])) {
+                valid = 0;
+                break;
+            }
+        }
+        if (!valid) {
+            printf("Your guess must contain only letters.\n");
+            attempt--;
+            continue;
+        }
+
+        char feedback[6];
+        generate_feedback(target, guess, feedback);
+        printf("%s  Feedback: %s\n", guess, feedback);
+
+        if (strcmp(guess, target) == 0) {
+            printf("Congratulations! You guessed the word in %d attempts.\n", attempt);
+            break;
+        }
+
+        if (attempt == 6) {
+            printf("Game over! The correct word was: %s\n", target);
+        }
+    }
+
+    for (size_t i = 0; i < word_count; i++) {
+        free(words[i]);
+    }
+    free(words);
+
+    // cleanup curl stuffA
+    curl_easy_cleanup(curl_handle);
+    free(chunk.memory);
+    curl_global_cleanup();
+
+    return 0;
+}
