@@ -50,11 +50,47 @@ void vypisLabyrint()
 // =================================
 // REKURZIVNÍ HLEDÁNÍ (DOPLNIT)
 // =================================
-int najdiCestu(int r, int s)
+int najdiCestu(int r, int s, int lr, int ls)
 {
     // TODO
     // vstup: souřadnice hráče r, s
     // výstup: 1 pokud existuje cesta do cíle, 0 pokud neexistuje
+
+    if (labyrint[r + 1][s] == 'C'){
+        return 1;
+    }
+    if (labyrint[r - 1][s] == 'C'){
+        return 1;
+    }
+    if (labyrint[r][s + 1] == 'C'){
+        return 1;
+    }
+    if (labyrint[r][s - 1] == 'C'){
+        return 1;
+    }
+
+
+
+    if (labyrint[r + 1][s] == '0' && r + 1 != lr){
+        if (najdiCestu(r + 1, s, r, s) == 1){
+            return 1;
+        }
+    }
+    if (labyrint[r - 1][s] == '0' && r - 1 != lr){
+        if (najdiCestu(r - 1, s, r, s) == 1){
+            return 1;
+        }
+    }
+    if (labyrint[r][s + 1] == '0' && s + 1 != ls){
+        if (najdiCestu(r, s + 1, r, s) == 1){
+            return 1;
+        }
+    }
+    if (labyrint[r][s - 1] == '0' && s - 1 != ls){
+        if (najdiCestu(r, s - 1, r, s) == 1){
+            return 1;
+        }
+    }
 
     return 0;
 }
@@ -71,7 +107,7 @@ int main()
 
     printf("Hledam cestu...\n");
 
-    if (najdiCestu(start_r, start_s))
+    if (najdiCestu(start_r, start_s, -1, -1))
         printf("Cesta existuje!\n");
     else
         printf("Cesta neexistuje.\n");
