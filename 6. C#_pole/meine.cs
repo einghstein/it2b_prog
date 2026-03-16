@@ -30,16 +30,12 @@ class Program
         return false;
     }
 
-    static bool delitel(int[] pole) {
-        int max = pole.Max();
-        for 
-    }
+
 
     static void Main()
     {
         int[] test = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12 };
         Console.Write("stej: ");
         Console.WriteLine(stejnePrvky(test));
-        Console.WriteLine($"delitel: {delitel(test)}");
     }
 }
