@@ -1,5 +1,5 @@
-using System.ComponentModel.Design;
-using System.Diagnostics.CodeAnalysis;
+
+using System.Collections.Generic;
 
 class Program
 {
@@ -69,8 +69,43 @@ class Program
         }
         Console.WriteLine();
     }
+
+    static void trojka ()
+    {
+        List<int> pole = new List<int> { 0 };
+        int i = 0;
+        while (true)
+        {
+            Console.Write("> ");
+            char inp = char.Parse(Console.ReadLine());
+            if (inp == 's') { pole.Append(pole[i] - 1); }
+            else if (inp == 'w') { pole.Append(pole[i] + 1); }
+            else if (inp == 'W') { pole.Append(pole[i] + 3); }
+            else if (inp == 'S') { pole.Append(pole[i] - 3); }
+            else { break; }
+        }
+       
+        int offset = pole[0];
+        foreach (int it in pole) { if (it < offset) { offset = it; } }
+        offset = Math.Abs(offset);
+        Console.WriteLine(offset);
+        foreach (int it in pole)
+        {
+            for (int j = 0; j < (it + offset); j++) { 
+                Console.Write("X");
+                Console.WriteLine($"{it}");
+            }
+            
+            Console.WriteLine(it);
+            
+        }
+        //Console.WriteLine(pole[pole.Length -1 ]);
+        
+    }
+
     static void Main()
     {
+        trojka();
         //quizz();
         //cenzura("gugugaga", 'g');
     }
