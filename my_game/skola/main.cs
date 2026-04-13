@@ -103,10 +103,47 @@ class Program
         
     }
 
+
+
     static void Main()
     {
         trojka();
         //quizz();
         //cenzura("gugugaga", 'g');
+    }
+}
+
+class Film
+{
+    public string Nazev;
+    public int Hodnoceni;
+
+    public Film(string nazev, int hodnoceni)
+    {
+        string Nazev = nazev;
+        int Hodnoceni = hodnoceni;
+    }
+}
+
+class App
+{
+    private int avg = 0;
+    public List<Film> list = new List<Film>();
+    void Add()
+    {
+        string nazev = Console.ReadLine();
+        int hodnoceni = int.Parse(Console.ReadLine());
+        avg += hodnoceni;
+        list.Add(new Film(nazev, hodnoceni));
+    }
+    void writeAll() { foreach (Film film in list) { Console.WriteLine(film.Nazev); } }
+    void find(string vyraz)
+    {
+        foreach (Film film in list) { if (film.Nazev.Contains(vyraz)) { Console.WriteLine(film.Nazev); } }
+        void getAvgHodnoceni() { Console.WriteLine(avg / list.Count()); }
+    }
+    void remove(string vyraz)
+    {
+        foreach (Film film in list) { if (film.Nazev.Contains(vyraz)) { list.Remove(film); } }
     }
 }
